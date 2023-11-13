@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  sme-node:
+    image: dockermcg/sme-backend:11131429
+    restart: always
+    network_mode: "host"
+    # volumes:
+    #   - './data:/usr/src/sme-backend/data'
+    environment:
+      - MAKER=
+      - TAKER=
+      - RPC_PROVIDER=
