@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 export class PythonService {
   executeScript(scriptPath: string, args: any[]): Promise<string> {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python', [scriptPath, ...args]);
+      const pythonProcess = spawn('python3', [scriptPath, ...args]);
 
       let output = '';
 

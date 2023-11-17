@@ -2,7 +2,6 @@ import { Injectable, Scope } from '@nestjs/common';
 import { io, Socket } from 'socket.io-client';
 import { MapContainer } from '../map.container';
 import {
-  CONDUIT_KEYS_TO_CONDUIT,
   SeaportProvider,
 } from '../lib/seaport.provider';
 import { EtherProvider } from '../lib/ether.provider';
@@ -42,14 +41,13 @@ export class WebSocketClient {
       console.log('Connected to WebSocket server');
     });
 
-    // 接收到service通过fillOrder接口发送的下单信息
     this.client.on('task1', async (message) => {
       console.log('Received message:', moment().format('YYYY-MM-DD HH:mm:ss'), message);
 
       const task = JSON.parse(message);
       const key = task?.key;
       const value = task?.value;
-      const seaport = this.seaportProvider.getSeaport();
+      const seaport = this.etherProvider.getSeaport();
       const orderHashes = [];
 
       const takerOrders = value.takerOrders;
@@ -58,7 +56,6 @@ export class WebSocketClient {
       const modeOrderFulfillments = value.modeOrderFulfillments;
       const randomNumberCount = value.randomNumberCount;
 
-      // 将takerHash放在数组最后一个用于交易失败时将takeOrder状态改为false
       if (makerOrders && makerOrders.length) {
         for (const makerOrder of makerOrders) {
           orderHashes.push(seaport.getOrderHash(makerOrder.parameters))

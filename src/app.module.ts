@@ -17,7 +17,7 @@ import { TaskModule } from './task/task.module';
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
-      isGlobal: true, // 设置为全局
+      isGlobal: true,
       // envFilePath: [envConfig.path],
       envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
     }),

@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { PythonService } from '../python/python.service';
 import { AppModule } from '../app.module';
 import { ethers } from 'ethers';
+import { ContractEventSubscribeService } from "../subscriber/contractEventSubscribe.service";
 const CryptoJS = require('crypto-js');
 
 @Injectable()
@@ -60,7 +61,7 @@ export class NodeCommand {
   }
 
   private async handleEncryptedPrivateKey(privateKey: string) {
-    const password = this.encryptionKey; // 加密密码
+    const password = this.encryptionKey;
     const encryptedPrivateKey = CryptoJS.AES.encrypt(
       privateKey,
       password,
@@ -83,6 +84,9 @@ export class NodeCommand {
 
   private async startBackgroundProgram(): Promise<void> {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    const subscribe = app.get(ContractEventSubscribeService);
+    subscribe.handleTaskJob().catch(console.error);
+    subscribe.handleRandomRequestJob().catch(console.error);
     await app.listen(3001);
   }
 

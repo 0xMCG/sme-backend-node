@@ -12,7 +12,7 @@ import { TaskContainer } from '../task.container';
 
 @Injectable()
 export class ContractEventSubscribeService {
-  private blockNumber;
+  private vrfBlockNumber = 0;
   private readonly eventOrdersMatched = 'OrdersMatched';
   private readonly eventOrdersCancelled = 'OrdersCancelled';
   static instance: any;
@@ -30,124 +30,49 @@ export class ContractEventSubscribeService {
     if (ContractEventSubscribeService.instance) {
       return ContractEventSubscribeService.instance;
     }
-    // this.blockNumber = this.configService.get('START_BLOCK');
-    // this.blockNumber = 4461746;
-    this.blockNumber = 4481233;
-
     ContractEventSubscribeService.instance = this;
   }
 
-  // async onModuleInit() {
-  //   // const block = 4092331;
-  //   this.etherProvider
-  //     .getContract()
-  //     .on('OrderCancelled', (event) => {
-  //       console.log('Get OrderCancelled event data:', event.args);
-  //     })
-  //     .on('OrdersMatched', (event) => {
-  //       console.log('Get OrdersMatched event data:', event.args);
-  //     });
-  // }
 
-  @Cron(CronExpression.EVERY_10_SECONDS) // Cron expression (e.g., every hour)
-  async handleHistoryBlockCron() {
-    // const release = await this.mutexManager.acquireLock();
-    // console.log(
-    //   'Running get history block cron job every 10 seconds, current block: ',
-    //   this.blockNumber,
-    // );
-    // // Task logic to be executed on schedule
-    // this.etherProvider
-    //   .getProvider()
-    //   .getBlockWithTransactions(this.blockNumber)
-    //   .then((block) => {
-    //     this.blockNumber++;
-    //     release();
-    //     const transactions = block.transactions;
-    //     transactions.forEach((tx) => {
-    //       tx.wait()
-    //         .then((receipt) => {
-    //           // parse log
-    //           for (const log of receipt.logs || []) {
-    //             if (log.address != '0xC619D985a88e341B618C23a543B8Efe2c55D1b37') {
-    //               continue;
-    //             }
-    //             try {
-    //               const event = this.etherProvider
-    //               .getContract()
-    //               .interface.parseLog(log);
-    //               if (event && event.name === 'ReturnedRandomness') {
-    //                 const randomWords = event.args['randomWords'].map(e => ethers.BigNumber.from(e).toString());
-    //                 const requestId = event.args['requestId'].toString();
-    //                 console.log('randomWords:::', randomWords);
-    //                 console.log('requestId:::', requestId);
-    //                 const isExist = this.mapContainer.get(requestId);
-    //                 if (isExist) {
-    //                   isExist.randomWords = randomWords;
-    //                   this.mapContainer.set(requestId, isExist);
-    //                 } else {
-    //                   this.mapContainer.set(requestId, {
-    //                     randomWords
-    //                   })
-    //                 }
-    //                 console.log('', this.mapContainer)
-    //                 console.log('Task publisher 推送消息')
-    //                 this.taskPublisher.emitTaskEvent({
-    //                   requestId,
-    //                   takerOrder: [],
-    //                   makerOrder: [],
-    //                   premiumOrder: [],
-    //                   randomWords: randomWords
-    //                 })
-    //               }
-    //             } catch (error) {
-    //               console.log('get tx result error::::', error.message)
-    //             }
-    //           }
-    //         })
-    //         .catch((error) => {
-    //           // console.error('Get transaction data error', error.message);
-    //           release();
-    //         });
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     console.error('Get block error:', this.blockNumber, error);
-    //     --this.blockNumber;
-    //     release();
-    //     // this.blockService.update(this._blockDBId, this.blockNumber);
-    //   });
+  async handleRandomRequestJob() {
+    while (true) {
+      try {
+        await this.handleLastBlockCron()
+      } catch (e) {
+        console.error(e);
+        await sleep(10 * 1000);
+      }
+      await sleep(6000);
+    }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_30_SECONDS)
   async handleLastBlockCron() {
-    // if (this.mapContainer.size() === 0) return;
-
-    // const release = await this.mutexManager.acquireLock();
-
+    if (this.mapContainer.size() === 0) return;
     const firstRequestId = this.mapContainer.getFirstKey();
 
-    const vrfContract = this.etherProvider.getVrfContract();
+    const vrfContract = this.etherProvider.getVrfConsumerContract();
     const provider = this.etherProvider.getProvider();
 
     let filter = vrfContract.filters.ReturnedRandomness();
+    const fromBlock = (this.vrfBlockNumber > 0 ? this.vrfBlockNumber : this.etherProvider.getVrfFromBlock()) + 1;
+    const toBlock = await this.etherProvider.getProvider().getBlockNumber();
+    if (fromBlock >= toBlock) {
+      return;
+    }
     let filterLog = {
-      fromBlock: 3856444,
-      toBlock: 'latest',
+      fromBlock,
+      toBlock,
       topics: filter.topics
     }
-    provider.getLogs(filterLog).then((result) => {
-      // console.log('result:::', result);
+    await provider.getLogs(filterLog).then((result) => {
       for (const res of result) {
         const event = vrfContract.interface.parseLog(res);
-        // console.log('event::', event)
         if (event && event.name === 'ReturnedRandomness') {
           const randomWords = event.args['randomWords'].map((e) =>
               ethers.BigNumber.from(e).toString(),
           );
           const requestId = event.args['requestId'].toString();
-          // console.log('randomWords:::', randomWords);
-          // console.log('requestId:::', requestId);
           if (firstRequestId === requestId) {
             const isExist = this.mapContainer.get(requestId);
             if (isExist) {
@@ -171,28 +96,39 @@ export class ContractEventSubscribeService {
           }
         }
       }
-    }).catch(console.error)
+    }).catch(e => {
+      console.error(e);
+    })
+    this.vrfBlockNumber = toBlock;
   }
 
-  // 每30秒从集合里拿对应的订单执行prepare交易
-  @Cron(CronExpression.EVERY_30_SECONDS)
+
+  async handleTaskJob() {
+    while (true) {
+      await this.handleTask();
+      await sleep(1000);
+    }
+  }
+
+
+  // @Cron(CronExpression.EVERY_30_SECONDS)
   async handleTask() {
-    console.log('this.taskContainer.size():::', this.taskContainer.size())
     if (this.taskContainer.size() === 0) return;
-    const release = await this.mutexManager.acquireLock();
     const key = this.taskContainer.getFirstKey();
 
     const { makerOrders, takerOrders, randomNumberCount, randomStrategy, modeOrderFulfillments, orderHashes } = this.taskContainer.get(key);
     this.taskContainer.delete(key);
-    const contract = this.seaportProvider.getContract();
+    const contract = this.etherProvider.getContract();
 
     try {
+      console.log(`Prepare start...`);
+      console.log(`makerOrders: ${makerOrders}`);
+      console.log(`takerOrders: ${takerOrders}`);
+      console.log(`randomNumberCount: ${randomNumberCount}`);
       const result = await contract.prepare(
           [...makerOrders, ...takerOrders],
-          // premiumOrder在前面数组的下标
           [],
           [],
-          // 2个随机数
           randomNumberCount,
           { gasLimit: 1000000 },
       );
@@ -204,23 +140,23 @@ export class ContractEventSubscribeService {
       let retryCount = 0;
 
       while (result.hash && receipt === null && retryCount < 20) {
-        console.log('123 retryCount: ', retryCount);
+        console.log('retryCount: ', retryCount);
         retryCount++;
         receipt = await this.etherProvider
             .getProvider()
             .getTransactionReceipt(result.hash);
-        await sleep(6000); // 等待6秒后继续检查交易确认
+        await sleep(6000);
       }
 
       console.log('receipt:::', receipt);
 
       if (receipt && receipt.status) {
         for (const log of receipt.logs || []) {
-          if (log.address != '0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625') {
+          if (`${log.address}`.toUpperCase() != `${this.etherProvider.getVrfPublisherContractAddress()}`.toUpperCase()) {
             continue;
           }
-          const event = this.seaportProvider
-              .getTestContract()
+          const event = this.etherProvider
+              .getVrfPublisherContract()
               .interface.parseLog(log);
           if (event && event.name === 'RandomWordsRequested') {
             const requestId = event.args['requestId']?.toString();
@@ -270,8 +206,6 @@ export class ContractEventSubscribeService {
             },
           }),
       );
-    } finally {
-      release();
     }
   }
 
