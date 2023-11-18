@@ -68,12 +68,12 @@ export class TaskSubscriber {
       try {
         console.log(`matchOrdersWithRandom start....`);
         const orders = [...data.makerOrder, ...data.takerOrder]
-        console.log(`orders: ${orders}`);
-        console.log(`modeOrderFulfillments: ${modeOrderFulfillments}`);
+        console.log(`orders: ${JSON.stringify(orders)}`);
+        console.log(`modeOrderFulfillments: ${JSON.stringify(modeOrderFulfillments)}`);
         console.log(`requestId: ${data.requestId}`);
-        console.log(`orderProbility: ${orderProbility}`);
+        console.log(`orderProbility: ${JSON.stringify(orderProbility)}`);
 
-        this.etherProvider
+        const r = await this.etherProvider
             .getContract()
             .matchOrdersWithRandom(
                 [...data.makerOrder, ...data.takerOrder],
@@ -82,14 +82,13 @@ export class TaskSubscriber {
                 orderProbility,
                 { gasLimit: 1500000 },
             )
-            .then((r: ContractTransaction) => {
-              const txHash = r.hash;
-              this.webSocketClient.sendProbabilityMessage(
-                  JSON.stringify({ orderPrices, txHash }),
-              );
-            })
-            .catch(console.error);
-      } catch (error) {}
+        const txHash = r.hash;
+        this.webSocketClient.sendProbabilityMessage(
+          JSON.stringify({ orderPrices, txHash }),
+        );
+      } catch (error) {
+        console.log('matchError', error)
+      }
     });
   }
 

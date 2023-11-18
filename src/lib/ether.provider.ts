@@ -7,6 +7,7 @@ import { Seaport as SMESeaport } from "./typechain-types-dual";
 import { SeaportABIvSME } from "../abi/Seaport_vSME_dual";
 import { vrfPublisherAbi } from "../abi/Seaport_VRF_publisher";
 import { Provider } from "@ethersproject/providers";
+import BigNumber from "bignumber.js";
 
 @Injectable()
 export class EtherProvider {
@@ -63,7 +64,7 @@ export class EtherProvider {
       conduitKeyToConduit: this.conduitMap,
     });
 
-    this.vrfConsumerFromBlock = this.configService.get('VRF_FROM_BLOCK', 3856444) as number;
+    this.vrfConsumerFromBlock = new BigNumber(this.configService.get('VRF_FROM_BLOCK', 3856444)).toNumber();
 
     this.vrfConsumerContract = new ethers.Contract(
       this.vrfConsumerAddress,
