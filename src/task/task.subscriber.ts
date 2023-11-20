@@ -31,7 +31,7 @@ export class TaskSubscriber {
       const orderPrices = [];
       if (data.randomWords.length === 1) {
         for (let order of (makerHash ? data.makerOrder : data.takerOrder)) {
-          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, order)
+          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, order, data.makerOrder)
           orderProbility.push({
             orderHash: price.orderHash,
             numerator: price.numerator,
@@ -45,7 +45,7 @@ export class TaskSubscriber {
             if (i >= data.makerOrder.length) {
               break;
             }
-            const price = await this.calculateOrderPrice(data.randomWords[i].toString(), data.randomStrategy, data.makerOrder[i]);
+            const price = await this.calculateOrderPrice(data.randomWords[i].toString(), data.randomStrategy, data.makerOrder[i], data.makerOrder[i]);
             orderProbility.push({
               orderHash: price.orderHash,
               numerator: price.numerator,
@@ -54,7 +54,7 @@ export class TaskSubscriber {
             orderPrices.push(price)
           }
         } else {
-          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, data.takerOrder[0]);
+          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, data.takerOrder[0], data.makerOrder[0]);
           orderProbility.push({
             orderHash: price.orderHash,
             numerator: price.numerator,
@@ -98,7 +98,7 @@ export class TaskSubscriber {
    * @param order
    * @private
    */
-  private async calculateOrderPrice(randomWord: string, randomStrategy: any, order: any): Promise<OrderPrice> {
+  private async calculateOrderPrice(randomWord: string, randomStrategy: any, order: any, makerOrder: any): Promise<OrderPrice> {
     const execResult = await this.pythonService.executeScript(
         './src/python/generate_beta_distribution.py',
         [randomWord, randomStrategy],
@@ -138,7 +138,7 @@ export class TaskSubscriber {
     price = new BigNumber(price).dividedBy(itemSize).toNumber();
     const orderHash = this.etherProvider
         .getSeaport()
-        .getOrderHash(order.parameters);
+        .getOrderHash(makerOrder.parameters);
     return {
       orderHash,
       price,
