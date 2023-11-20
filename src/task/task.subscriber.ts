@@ -130,9 +130,9 @@ export class TaskSubscriber {
     }
 
     if (offer[0].itemType === 3) {
-      itemSize = new BigNumber(offer[0].endAmount).multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
+      itemSize = new BigNumber(offer[0].endAmount).multipliedBy(makerOrder.numerator).dividedBy(makerOrder.denominator).toNumber();
     } else if (consideration[0].itemType === 3) {
-      itemSize = new BigNumber(consideration[0].endAmount).multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
+      itemSize = new BigNumber(consideration[0].endAmount).multipliedBy(makerOrder.numerator).dividedBy(makerOrder.denominator).toNumber();
     }
 
     price = new BigNumber(price).dividedBy(itemSize).toNumber();
@@ -144,8 +144,8 @@ export class TaskSubscriber {
       price,
       numerator,
       denominator,
-      itemNumerator: order.numerator,
-      itemDenominator: order.denominator,
+      itemNumerator: makerOrder.numerator,
+      itemDenominator: makerOrder.denominator,
       itemSize
     }
   }
