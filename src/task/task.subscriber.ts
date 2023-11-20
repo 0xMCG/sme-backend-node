@@ -30,8 +30,9 @@ export class TaskSubscriber {
       const makerHash = data.makerOrder[0].parameters.offer[0].itemType === 3;
       const orderPrices = [];
       if (data.randomWords.length === 1) {
-        for (let order of (makerHash ? data.makerOrder : data.takerOrder)) {
-          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, order, data.makerOrder)
+        for (let i = 0; i < data.makerOrder.length; i++) {
+          const order = makerHash ? data.makerOrder[i] : data.takerOrder[i];
+          const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, order, data.makerOrder[i])
           orderProbility.push({
             orderHash: price.orderHash,
             numerator: price.numerator,
