@@ -106,7 +106,7 @@ export class TaskSubscriber {
     const result = JSON.parse(execResult);
     const numerator = result[0];
     const denominator = result[1];
-    const rate = _.round(_.divide(numerator, denominator), 2);
+    const rate = _.round(_.divide(numerator, denominator), 4);
     const offer = order.parameters.offer;
     const consideration = order.parameters.consideration;
     let price = 0;
@@ -117,14 +117,16 @@ export class TaskSubscriber {
 
       const start = parseFloat(ethers.utils.formatEther(ethereumStartValue));
       const end = parseFloat(ethers.utils.formatEther(ethereumEndValue));
-      price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start).toNumber();
+      price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
+        .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
     } else if (consideration[0].itemType === 1) {
       const ethereumStartValue = ethers.BigNumber.from(consideration[0].startAmount);
       const ethereumEndValue = ethers.BigNumber.from(consideration[0].endAmount);
 
       const start = parseFloat(ethers.utils.formatEther(ethereumStartValue));
       const end = parseFloat(ethers.utils.formatEther(ethereumEndValue));
-      price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start).toNumber();
+      price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
+        .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
     }
 
     if (offer[0].itemType === 3) {
@@ -132,6 +134,8 @@ export class TaskSubscriber {
     } else if (consideration[0].itemType === 3) {
       itemSize = new BigNumber(consideration[0].endAmount).multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
     }
+
+    price = new BigNumber(price).dividedBy(itemSize).toNumber();
     const orderHash = this.etherProvider
         .getSeaport()
         .getOrderHash(order.parameters);
