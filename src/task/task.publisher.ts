@@ -15,6 +15,7 @@ export interface Task {
 
 export type OrderPrice = {
   orderHash: PromiseOrValue<BytesLike>;
+  matchOrderHash: PromiseOrValue<BytesLike>;
   numerator: PromiseOrValue<BigNumberish>;
   denominator: PromiseOrValue<BigNumberish>;
   itemNumerator: PromiseOrValue<BigNumberish>;

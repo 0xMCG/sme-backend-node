@@ -27,21 +27,24 @@ export class TaskSubscriber {
       const orderProbility: OrderProbilityStruct[] = [];
       const modeOrderFulfillments: MatchOrdersFulfillment[] =
           data.modeOrderFulfillments;
-      const makerHash = data.makerOrder[0].parameters.offer[0].itemType === 3;
+      const listOrder = data.makerOrder[0].parameters.offer[0].itemType === 3;
       const orderPrices = [];
       if (data.randomWords.length === 1) {
         for (let i = 0; i < data.makerOrder.length; i++) {
-          const order = makerHash ? data.makerOrder[i] : data.takerOrder[i];
+          const order = listOrder ? data.makerOrder[i] : data.takerOrder[i];
           const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, order, data.makerOrder[i])
           orderProbility.push({
             orderHash: price.orderHash,
             numerator: price.numerator,
             denominator: price.denominator
           });
-          orderPrices.push(price)
+          orderPrices.push({
+            ...price,
+            orderHash: price.matchOrderHash
+          })
         }
       } else if (data.randomWords.length > 1) {
-        if (makerHash) {
+        if (listOrder) {
           for (let i = 0; i < data.randomWords.length; i++) {
             if (i >= data.makerOrder.length) {
               break;
@@ -52,7 +55,10 @@ export class TaskSubscriber {
               numerator: price.numerator,
               denominator: price.denominator
             });
-            orderPrices.push(price)
+            orderPrices.push({
+              ...price,
+              orderHash: price.matchOrderHash
+            })
           }
         } else {
           const price = await this.calculateOrderPrice(data.randomWords[0].toString(), data.randomStrategy, data.takerOrder[0], data.makerOrder[0]);
@@ -61,7 +67,10 @@ export class TaskSubscriber {
             numerator: price.numerator,
             denominator: price.denominator
           });
-          orderPrices.push(price)
+          orderPrices.push({
+            ...price,
+            orderHash: price.matchOrderHash
+          })
         }
       }
 
@@ -139,8 +148,10 @@ export class TaskSubscriber {
     price = new BigNumber(price).dividedBy(itemSize).toNumber();
     const orderHash = this.etherProvider
         .getSeaport()
-        .getOrderHash(makerOrder.parameters);
+        .getOrderHash(order.parameters);
+    const matchOrderHash = this.etherProvider.getSeaport().getOrderHash(makerOrder.parameters);
     return {
+      matchOrderHash,
       orderHash,
       price,
       numerator,
