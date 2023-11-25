@@ -122,19 +122,23 @@ export class TaskSubscriber {
     let price = 0;
     let itemSize = 1;
     if (offer[0].itemType === 1) {
-      const ethereumStartValue = ethers.BigNumber.from(offer[0].startAmount);
-      const ethereumEndValue = ethers.BigNumber.from(offer[0].endAmount);
-
-      const start = parseFloat(ethers.utils.formatEther(ethereumStartValue));
-      const end = parseFloat(ethers.utils.formatEther(ethereumEndValue));
+      let start = 0, end = 0;
+      for (const o of offer) {
+        const ethereumStartValue = ethers.BigNumber.from(o.startAmount);
+        const ethereumEndValue = ethers.BigNumber.from(o.endAmount);
+        start = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumStartValue))).plus(start).toNumber();
+        end = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumEndValue))).plus(end).toNumber();
+      }
       price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
         .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
     } else if (consideration[0].itemType === 1) {
-      const ethereumStartValue = ethers.BigNumber.from(consideration[0].startAmount);
-      const ethereumEndValue = ethers.BigNumber.from(consideration[0].endAmount);
-
-      const start = parseFloat(ethers.utils.formatEther(ethereumStartValue));
-      const end = parseFloat(ethers.utils.formatEther(ethereumEndValue));
+      let start = 0, end = 0;
+      for (const c of consideration) {
+        const ethereumStartValue = ethers.BigNumber.from(c.startAmount);
+        const ethereumEndValue = ethers.BigNumber.from(c.endAmount);
+        start = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumStartValue))).plus(start).toNumber();
+        end = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumEndValue))).plus(end).toNumber();
+      }
       price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
         .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
     }
