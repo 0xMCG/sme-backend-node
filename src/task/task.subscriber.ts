@@ -130,7 +130,7 @@ export class TaskSubscriber {
         end = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumEndValue))).plus(end).toNumber();
       }
       price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
-        .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
+        .multipliedBy(makerOrder.numerator).dividedBy(makerOrder.denominator).toNumber();
     } else if (consideration[0].itemType === 1) {
       let start = 0, end = 0;
       for (const c of consideration) {
@@ -140,7 +140,7 @@ export class TaskSubscriber {
         end = new BigNumber(parseFloat(ethers.utils.formatEther(ethereumEndValue))).plus(end).toNumber();
       }
       price = new BigNumber(end).minus(start).multipliedBy(rate).plus(start)
-        .multipliedBy(order.numerator).dividedBy(order.denominator).toNumber();
+        .multipliedBy(makerOrder.numerator).dividedBy(makerOrder.denominator).toNumber();
     }
 
     if (offer[0].itemType === 3) {
