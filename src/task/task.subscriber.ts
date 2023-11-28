@@ -102,6 +102,37 @@ export class TaskSubscriber {
     });
   }
 
+  private async parseScriptResult(randomStrategy: any, randomWord: string): Promise<{numerator: number, denominator: number}> {
+    const execResult = await this.pythonService.executeScript(
+      './src/python/generate_beta_distribution_1.py',
+      [randomWord, randomStrategy],
+    );
+    const result = JSON.parse(execResult);
+    const strategyNumber = new BigNumber(randomStrategy).toNumber();
+    // common random strategy
+    if (strategyNumber === 0) {
+      return {
+        numerator: new BigNumber(result[0]).toNumber(),
+        denominator: new BigNumber(result[1]).toNumber()
+      }
+    }
+
+    // initial bid order random strategy
+    const price = new BigNumber(result[1]).minus(result[0])
+      .multipliedBy(result[2])
+      .dividedBy(result[3])
+      .plus(result[0]);
+    const denominator = 1000000;
+    BigNumber.config({ROUNDING_MODE: BigNumber.ROUND_DOWN});
+    const numerator = new BigNumber(new BigNumber(price).dividedBy(1010)
+      .multipliedBy(denominator).toFixed(0))
+      .toNumber();
+    return {
+      numerator,
+      denominator
+    }
+  }
+
   /**
    * @param randomWord
    * @param randomStrategy
@@ -109,13 +140,14 @@ export class TaskSubscriber {
    * @private
    */
   private async calculateOrderPrice(randomWord: string, randomStrategy: any, order: any, makerOrder: any): Promise<OrderPrice> {
-    const execResult = await this.pythonService.executeScript(
-        './src/python/generate_beta_distribution.py',
-        [randomWord, randomStrategy],
-    );
-    const result = JSON.parse(execResult);
-    const numerator = result[0];
-    const denominator = result[1];
+    // const execResult = await this.pythonService.executeScript(
+    //     './src/python/generate_beta_distribution.py',
+    //     [randomWord, randomStrategy],
+    // );
+    // const result = JSON.parse(execResult);
+    const {numerator, denominator} = await this.parseScriptResult(randomStrategy, randomWord);
+    // const numerator = result[0];
+    // const denominator = result[1];
     const rate = _.round(_.divide(numerator, denominator), 4);
     const offer = makerOrder.parameters.offer;
     const consideration = makerOrder.parameters.consideration;
