@@ -123,10 +123,15 @@ export class TaskSubscriber {
       .dividedBy(result[3])
       .plus(result[0]);
     const denominator = 1000000;
+
+
     BigNumber.config({ROUNDING_MODE: BigNumber.ROUND_DOWN});
     const numerator = new BigNumber(new BigNumber(price).dividedBy(1010)
       .multipliedBy(denominator).toFixed(0))
       .toNumber();
+    console.log("result:" + result)
+    console.log("price:" + price)
+    console.log("numerator:" + numerator)
     return {
       numerator,
       denominator
