@@ -153,7 +153,7 @@ export class TaskSubscriber {
     const {numerator, denominator} = await this.parseScriptResult(randomStrategy, randomWord);
     // const numerator = result[0];
     // const denominator = result[1];
-    const rate = _.round(_.divide(numerator, denominator), 4);
+    const rate = new BigNumber(numerator).dividedBy(denominator);
     const offer = makerOrder.parameters.offer;
     const consideration = makerOrder.parameters.consideration;
     let price = 0;
