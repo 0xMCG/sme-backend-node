@@ -46,10 +46,9 @@ export class WebSocketClient {
 
       const task = JSON.parse(message);
       const key = task?.key;
-      const value = task?.value;
+      const value = JSON.parse(task?.value);
       const seaport = this.etherProvider.getSeaport();
       const orderHashes = [];
-
       const takerOrders = value.takerOrders;
       const makerOrders = value.makerOrders;
       const randomStrategy = value.randomStrategy;
