@@ -122,8 +122,8 @@ export class ContractEventSubscribeService {
 
     try {
       console.log(`Prepare start...`);
-      console.log(`makerOrders: ${makerOrders}`);
-      console.log(`takerOrders: ${takerOrders}`);
+      console.log(`makerOrders: ${JSON.stringify(makerOrders)}`);
+      console.log(`takerOrders: ${JSON.stringify(takerOrders)}`);
       console.log(`randomNumberCount: ${randomNumberCount}`);
       const result = await contract.prepare(
           [...makerOrders, ...takerOrders],
