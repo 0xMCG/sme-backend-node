@@ -90,7 +90,6 @@ export class TaskSubscriber {
                 modeOrderFulfillments,
                 data.requestId,
                 orderProbility,
-                { gasLimit: 1500000 },
             )
         const txHash = r.hash;
         this.webSocketClient.sendProbabilityMessage(

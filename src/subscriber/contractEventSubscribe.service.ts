@@ -130,7 +130,6 @@ export class ContractEventSubscribeService {
           [],
           [],
           randomNumberCount,
-          { gasLimit: 1000000 },
       );
 
       console.log('result.hash:::', result.hash);
