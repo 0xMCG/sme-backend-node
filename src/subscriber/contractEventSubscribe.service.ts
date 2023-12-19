@@ -9,6 +9,7 @@ import { MapContainer } from '../map.container';
 import { ethers } from 'ethers';
 import { sleep, WebSocketClient } from '../websocket/websocket.client';
 import { TaskContainer } from '../task.container';
+import * as moment from 'moment';
 
 @Injectable()
 export class ContractEventSubscribeService {
@@ -38,11 +39,11 @@ export class ContractEventSubscribeService {
     while (true) {
       try {
         await this.handleLastBlockCron()
+        await sleep(1000);
       } catch (e) {
         console.error(e);
-        await sleep(10 * 1000);
+        await sleep(3 * 1000);
       }
-      await sleep(6000);
     }
   }
 
@@ -74,6 +75,7 @@ export class ContractEventSubscribeService {
           );
           const requestId = event.args['requestId'].toString();
           if (firstRequestId === requestId) {
+            console.log(`fillOrderCatchVrfRequestId: ${moment().format('YYYY-MM-DD HH:mm:ss')}...`)
             const isExist = this.mapContainer.get(requestId);
             if (isExist) {
               isExist.randomWords = randomWords;
@@ -106,7 +108,7 @@ export class ContractEventSubscribeService {
   async handleTaskJob() {
     while (true) {
       await this.handleTask();
-      await sleep(1000);
+      await sleep(200);
     }
   }
 
@@ -125,26 +127,27 @@ export class ContractEventSubscribeService {
       console.log(`makerOrders: ${JSON.stringify(makerOrders)}`);
       console.log(`takerOrders: ${JSON.stringify(takerOrders)}`);
       console.log(`randomNumberCount: ${randomNumberCount}`);
+      console.log(`fillOrderPrepareStart: ${moment().format('YYYY-MM-DD HH:mm:ss')}...`);
       const result = await contract.prepare(
           [...makerOrders, ...takerOrders],
           [],
           [],
           randomNumberCount,
       );
-
+      console.log(`fillOrderPrepareSuccess: ${moment().format('YYYY-MM-DD HH:mm:ss')}...`);
       console.log('result.hash:::', result.hash);
 
       let receipt = null;
 
       let retryCount = 0;
 
-      while (result.hash && receipt === null && retryCount < 20) {
+      while (result.hash && receipt === null && retryCount < 100) {
         console.log('retryCount: ', retryCount);
         retryCount++;
         receipt = await this.etherProvider
             .getProvider()
             .getTransactionReceipt(result.hash);
-        await sleep(6000);
+        await sleep(1000);
       }
 
       console.log('receipt:::', receipt);
@@ -160,7 +163,7 @@ export class ContractEventSubscribeService {
           if (event && event.name === 'RandomWordsRequested') {
             const requestId = event.args['requestId']?.toString();
             console.log('requestId:::', requestId);
-
+            console.log(`fillOrderMatchStart: ${moment().format('YYYY-MM-DD HH:mm:ss')}...`);
             this.mapContainer.set(requestId, {
               makerOrders,
               takerOrders,

@@ -43,7 +43,7 @@ export class WebSocketClient {
 
     this.client.on('task1', async (message) => {
       console.log('Received message:', moment().format('YYYY-MM-DD HH:mm:ss'), message);
-
+      console.log(`fillOrderRequestSuccessTask: ${moment().format('YYYY-MM-DD HH:mm:ss')}...`);
       const task = JSON.parse(message);
       const key = task?.key;
       const value = JSON.parse(task?.value);

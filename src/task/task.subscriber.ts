@@ -9,6 +9,7 @@ import * as _ from 'lodash';
 import { ContractTransaction, ethers } from "ethers";
 import { EtherProvider } from "../lib/ether.provider";
 import BigNumber from "bignumber.js";
+import * as moment from 'moment';
 @Injectable()
 export class TaskSubscriber {
   constructor(
@@ -76,13 +77,13 @@ export class TaskSubscriber {
 
 
       try {
-        console.log(`matchOrdersWithRandom start....`);
+
         const orders = [...data.makerOrder, ...data.takerOrder]
         console.log(`orders: ${JSON.stringify(orders)}`);
         console.log(`modeOrderFulfillments: ${JSON.stringify(modeOrderFulfillments)}`);
         console.log(`requestId: ${data.requestId}`);
         console.log(`orderProbility: ${JSON.stringify(orderProbility)}`);
-
+        console.log(`fillOrderMatchOrdersWithRandom ${moment().format('YYYY-MM-DD HH:mm:ss')} start....`);
         const r = await this.etherProvider
             .getContract()
             .matchOrdersWithRandom(
@@ -92,6 +93,7 @@ export class TaskSubscriber {
                 orderProbility,
             )
         const txHash = r.hash;
+        console.log(`fillOrderMatchOrdersWithRandomSuccess ${moment().format('YYYY-MM-DD HH:mm:ss')} success....`);
         this.webSocketClient.sendProbabilityMessage(
           JSON.stringify({ orderPrices, txHash }),
         );
