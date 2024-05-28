@@ -1,4 +1,4 @@
-FROM ubuntu:latest as builder
+FROM ubuntu:20.04 as builder
 
 # Install any needed packages
 RUN apt-get update && \
@@ -23,4 +23,4 @@ COPY . .
 RUN yarn && yarn build
 
 # Run
-ENTRYPOINT yarn cli start
+ENTRYPOINT yarn start
