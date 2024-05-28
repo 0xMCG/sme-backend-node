@@ -32,7 +32,7 @@ export class WebSocketClient {
       return WebSocketClient.instance;
     }
 
-    this.client = io('ws://localhost:3000');
+    this.client = io('ws://172.26.6.153:3003');
 
     WebSocketClient.instance = this;
     // this.client  = new WebSocket('ws://localhost:3000');

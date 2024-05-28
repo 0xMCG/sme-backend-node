@@ -11,7 +11,7 @@ RUN apt-get install --no-install-recommends -y nodejs && \
   rm -rf /var/lib/apt/lists/*
 RUN npm install yarn -g
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip
+  apt-get install -y python3 python3-pip
 RUN pip3 install scipy
 
 WORKDIR /usr/src/sme
@@ -23,4 +23,4 @@ COPY . .
 RUN yarn && yarn build
 
 # Run
-ENTRYPOINT yarn start
+ENTRYPOINT yarn cli start
