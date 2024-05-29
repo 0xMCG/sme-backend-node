@@ -9,6 +9,7 @@ import { TaskPublisher } from '../task/task.publisher';
 import { MatchOrdersFulfillment } from '@opensea/seaport-js/lib/types';
 import * as moment from 'moment';
 import { TaskContainer } from '../task.container';
+import { ConfigService } from "@nestjs/config";
 
 export function sleep(ms: any) {
   return new Promise((resolve) => {
@@ -27,12 +28,14 @@ export class WebSocketClient {
       private readonly mapContainer: MapContainer,
       private readonly taskContainer: TaskContainer,
       private readonly taskPublisher: TaskPublisher,
+      private readonly configService: ConfigService
   ) {
     if (WebSocketClient.instance) {
       return WebSocketClient.instance;
     }
-
-    this.client = io('ws://172.26.6.153:3003');
+    const host = this.configService.get('WS_HOST', 'localhost');
+    const port = this.configService.get('WS_PORT', '3000');
+    this.client = io(`ws://${host}:${port}`);
 
     WebSocketClient.instance = this;
     // this.client  = new WebSocket('ws://localhost:3000');
